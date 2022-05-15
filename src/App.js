@@ -6,7 +6,7 @@ import { Button } from "./components/Button";
 import { abi } from "./utils/WavePortal.json";
 import "./App.css";
 
-const contractAddress = "0x329483c85604B3669210BE1CF80C3ABc6d5c8A11";
+const contractAddress = "0x119f7CbC91C951512DB95b39548e72cB27cfc55B";
 const contractABI = abi;
 
 export default function App() {
