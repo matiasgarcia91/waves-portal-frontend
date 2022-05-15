@@ -1,41 +1,46 @@
-import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
-import "./App.css";
-import { abi } from "./utils/WavePortal.json";
+import { ethers } from "ethers";
 
-const contractAddress = "0x7DC057d750f77b3e6Bd087d7b9f9ce937EC0aD55";
+import { Button } from "./components/Button";
+
+import { abi } from "./utils/WavePortal.json";
+import "./App.css";
+
+const contractAddress = "0x329483c85604B3669210BE1CF80C3ABc6d5c8A11";
 const contractABI = abi;
 
 export default function App() {
   const [currentAccount, setCurrentAccount] = useState("");
-  const [count, setCount] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [waves, setWaves] = useState([]);
 
   useEffect(() => {
+    const checkWalletConnected = async () => {
+      try {
+        const eth = window.ethereum;
+
+        if (!eth) {
+          console.log("Make sure you have metamask");
+          return;
+        }
+
+        const accounts = await eth.request({ method: "eth_accounts" });
+
+        if (accounts.length !== 0) {
+          console.log("found authorized account", accounts[0]);
+          setCurrentAccount(accounts[0]);
+          getWaves();
+        } else {
+          console.log("no authorized account found");
+        }
+      } catch (e) {
+        console.log(e.message);
+      }
+    };
+
     checkWalletConnected();
   }, []);
-
-  const checkWalletConnected = async () => {
-    try {
-      const eth = window.ethereum;
-
-      if (!eth) {
-        console.log("Make sure you have metamask");
-        return;
-      }
-      // console.log("Eth", eth);
-
-      const accounts = await eth.request({ method: "eth_accounts" });
-
-      if (accounts.length !== 0) {
-        console.log("found authorized account", accounts[0]);
-        setCurrentAccount(accounts[0]);
-      } else {
-        console.log("no authorized account found");
-      }
-    } catch (e) {
-      console.log(e.message);
-    }
-  };
 
   const connectWallet = async () => {
     const { ethereum } = window;
@@ -56,25 +61,47 @@ export default function App() {
     }
   };
 
+  // const getTotalWaves = async () => {
+  //   try {
+  //     const { ethereum } = window;
+
+  //     if (!ethereum) return;
+
+  //     const provider = new ethers.providers.Web3Provider(ethereum);
+  //     const signer = provider.getSigner();
+
+  //     console.log("signer", signer);
+  //     const wavePortalContract = new ethers.Contract(
+  //       contractAddress,
+  //       contractABI,
+  //       signer
+  //     );
+
+  //     let count = await wavePortalContract.getTotalWaves();
+  //     console.log("Retrieved total wave count...", count.toNumber());
+  //     setCount(count.toNumber());
+  //   } catch (e) {
+  //     console.log(e.message);
+  //   }
+  // };
+
   const getWaves = async () => {
     try {
       const { ethereum } = window;
-
       if (!ethereum) return;
 
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
 
-      console.log("signer", signer);
       const wavePortalContract = new ethers.Contract(
         contractAddress,
         contractABI,
         signer
       );
 
-      let count = await wavePortalContract.getTotalWaves();
-      console.log("Retrieved total wave count...", count.toNumber());
-      setCount(count.toNumber());
+      const allWaves = await wavePortalContract.getAllWaves();
+      console.log(allWaves);
+      setWaves(allWaves);
     } catch (e) {
       console.log(e.message);
     }
@@ -84,24 +111,26 @@ export default function App() {
     try {
       const { ethereum } = window;
 
-      if (!ethereum) return;
-
+      if (!ethereum || !message) return;
+      setLoading(true);
       const provider = new ethers.providers.Web3Provider(ethereum);
       const signer = provider.getSigner();
+      console.log(signer, contractAddress, contractABI);
       const wavePortalContract = new ethers.Contract(
         contractAddress,
         contractABI,
         signer
       );
 
-      const waveTxn = await wavePortalContract.wave();
+      const waveTxn = await wavePortalContract.wave(message);
       console.log("Mining...", waveTxn.hash);
 
       await waveTxn.wait();
       console.log("Mined -- ", waveTxn.hash);
 
-      const count = await wavePortalContract.getTotalWaves();
-      setCount(count.toNumber());
+      const waves = await wavePortalContract.getAllWaves();
+      setWaves(waves);
+      setLoading(false);
     } catch (e) {
       console.log(e.message);
     }
@@ -110,42 +139,76 @@ export default function App() {
   return (
     <div className="mainContainer">
       <div className="header">
-        <div />
+        <div>
+          <span>
+            <a
+              className="etherscan"
+              href="https://ropsten.etherscan.io/address/0x329483c85604B3669210BE1CF80C3ABc6d5c8A11"
+            >
+              Etherscan
+            </a>
+          </span>
+        </div>
         <div>
           <span role="img" aria-label="wave">
             👋
           </span>{" "}
-          Hey there! {currentAccount}
+          Hey there!
         </div>
+
         <div style={{ display: "flex", alignItems: "center" }}>
           <button
             className="waveButton"
-            style={{ backgroundColor: "lightblue" }}
+            style={{ backgroundColor: "lightblue", height: 50, fontSize: 16 }}
             onClick={connectWallet}
           >
             Connect wallet
           </button>
         </div>
       </div>
-      <div className="dataContainer">
-        <div className="bio">Say hello!</div>
-
-        <button className="waveButton" onClick={wave}>
-          Wave at Me
-        </button>
-        <button
-          className="waveButton"
-          onClick={getWaves}
-          style={{ marginTop: "20px" }}
-        >
-          Get current amount
-        </button>
-      </div>
-      {(count === 0 || count > 0) && (
+      {currentAccount && (
         <div>
-          <h3>{`Current amount of waves: ${count}`}</h3>
+          <h3>You are: {currentAccount}</h3>
         </div>
       )}
+      <div className="dataContainer">
+        <div className="bio">
+          First simple web3 site that interacts with a smart contract on
+          testnet. Currently working on <b>Ropsten Network.</b>
+          <br />
+          <br />
+          Send me a wave!
+        </div>
+        <div
+          style={{ marginBottom: 10, display: "flex", flexDirection: "column" }}
+        >
+          <label className="bio">Leave a message!</label>
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            style={{ height: 24 }}
+          />
+        </div>
+        <Button loading={loading} onClick={wave}>
+          Wave at me
+        </Button>
+      </div>
+      <div className="messages-container">
+        {waves.map((w) => (
+          <div className="message">
+            <div style={{ padding: 10 }}>
+              <p
+                style={{ marginTop: 0, marginBottom: 0 }}
+                className="from-waver"
+              >
+                From: {w.waver}
+              </p>
+              <p style={{ marginTop: 10, marginBottom: 0 }}>"{w.message}"</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

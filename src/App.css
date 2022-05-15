@@ -12,7 +12,7 @@
   flex-direction: column;
   justify-content: center;
   max-width: 600px;
-  margin-top: 60px;
+  margin-top: 30px;
   height: 100%;
 }
 
@@ -31,10 +31,43 @@
   margin-top: 16px;
   margin-bottom: 20px;
 }
+.etherscan {
+  font-size: 24px;
+  text-decoration: none;
+  color: inherit;
+}
 
 .waveButton {
   cursor: pointer;
   padding: 8px;
   border: 0;
   border-radius: 5px;
+}
+
+.messages-container {
+  margin-top: 30px;
+  max-height: 400px;
+  width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: scroll;
+}
+::-webkit-scrollbar {
+  width: 0; /* Remove scrollbar space */
+  background: transparent; /* Optional: just make scrollbar invisible */
+}
+
+.message {
+  width: 380px;
+  height: 80px;
+  border: 1px solid black;
+  margin: 10px 10px 0px 10px;
+  border-radius: 14px;
+  background-color: burlywood;
+}
+
+.from-waver {
+  font-style: italic;
+  font-size: 12px;
 }
