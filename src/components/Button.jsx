@@ -56,7 +56,10 @@ export const Button = ({ children, variant = "primary", ...props }) => {
   return (
     <StyledButton variant={variant} {...props}>
       {props.loading ? (
-        <Spinner color={spinnerColor} size={16} style={{ marginBottom: 3 }} />
+        <>
+          <span style={{ marginRight: 20 }}>Mining {"  "}</span>
+          <Spinner color={spinnerColor} size={16} style={{ marginBottom: 3 }} />
+        </>
       ) : (
         <>
           {children}

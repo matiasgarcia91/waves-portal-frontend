@@ -6,7 +6,7 @@ import { Button } from "./components/Button";
 import { abi } from "./utils/WavePortal.json";
 import "./App.css";
 
-const contractAddress = "0x119f7CbC91C951512DB95b39548e72cB27cfc55B";
+const contractAddress = "0x0d69eacd3310BcbB57649Ad1A1f8b4B148322b3C";
 const contractABI = abi;
 
 export default function App() {
@@ -39,8 +39,40 @@ export default function App() {
       }
     };
 
+    const setUpEventListener = () => {
+      let wavePortalContract;
+
+      // Add new wave events to state
+      const onNewWave = (from, timestamp, message) => {
+        console.log("NewWave", from, timestamp, message);
+        setWaves((prevState) => [
+          ...prevState,
+          {
+            address: from,
+            timestamp: new Date(timestamp * 1000),
+            message: message,
+          },
+        ]);
+      };
+
+      if (window.ethereum) {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        // connect to contract
+        wavePortalContract = new ethers.Contract(
+          contractAddress,
+          contractABI,
+          signer
+        );
+
+        // hook up event handler to contract event
+        wavePortalContract.on("NewWave", onNewWave);
+      }
+    };
+
     checkWalletConnected();
-  }, []);
+    setUpEventListener();
+  }, [currentAccount]);
 
   const connectWallet = async () => {
     const { ethereum } = window;
@@ -61,30 +93,6 @@ export default function App() {
     }
   };
 
-  // const getTotalWaves = async () => {
-  //   try {
-  //     const { ethereum } = window;
-
-  //     if (!ethereum) return;
-
-  //     const provider = new ethers.providers.Web3Provider(ethereum);
-  //     const signer = provider.getSigner();
-
-  //     console.log("signer", signer);
-  //     const wavePortalContract = new ethers.Contract(
-  //       contractAddress,
-  //       contractABI,
-  //       signer
-  //     );
-
-  //     let count = await wavePortalContract.getTotalWaves();
-  //     console.log("Retrieved total wave count...", count.toNumber());
-  //     setCount(count.toNumber());
-  //   } catch (e) {
-  //     console.log(e.message);
-  //   }
-  // };
-
   const getWaves = async () => {
     try {
       const { ethereum } = window;
@@ -100,8 +108,14 @@ export default function App() {
       );
 
       const allWaves = await wavePortalContract.getAllWaves();
-      console.log(allWaves);
-      setWaves(allWaves);
+      console.log("og waver", allWaves);
+      const cleanedWaves = allWaves.map((w) => ({
+        address: w.waver,
+        timestamp: new Date(w.timestamp * 1000),
+        message: w.message,
+      }));
+      console.log("waves", cleanedWaves);
+      setWaves(cleanedWaves);
     } catch (e) {
       console.log(e.message);
     }
@@ -128,13 +142,15 @@ export default function App() {
       await waveTxn.wait();
       console.log("Mined -- ", waveTxn.hash);
 
-      const waves = await wavePortalContract.getAllWaves();
-      setWaves(waves);
+      // const waves = await wavePortalContract.getAllWaves();
+      // setWaves(waves);
       setLoading(false);
     } catch (e) {
       console.log(e.message);
     }
   };
+
+  const sortedWaves = [...waves].sort((a, b) => b.timestamp - a.timestamp);
 
   return (
     <div className="mainContainer">
@@ -190,19 +206,19 @@ export default function App() {
             style={{ height: 24 }}
           />
         </div>
-        <Button loading={loading} onClick={wave}>
+        <Button loading={loading ? 1 : 0} onClick={wave}>
           Wave at me
         </Button>
       </div>
       <div className="messages-container">
-        {waves.map((w) => (
-          <div className="message">
+        {sortedWaves.map((w) => (
+          <div className="message" key={Math.random() * 10000}>
             <div style={{ padding: 10 }}>
               <p
                 style={{ marginTop: 0, marginBottom: 0 }}
                 className="from-waver"
               >
-                From: {w.waver}
+                From: {w.address} - At: {w.timestamp.toLocaleString()}
               </p>
               <p style={{ marginTop: 10, marginBottom: 0 }}>"{w.message}"</p>
             </div>
