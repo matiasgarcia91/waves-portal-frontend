@@ -206,7 +206,11 @@ export default function App() {
             style={{ height: 24 }}
           />
         </div>
-        <Button loading={loading ? 1 : 0} onClick={wave}>
+        <Button
+          loading={loading ? 1 : 0}
+          onClick={wave}
+          disabled={!currentAccount}
+        >
           Wave at me
         </Button>
       </div>

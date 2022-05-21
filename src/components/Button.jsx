@@ -54,7 +54,11 @@ export const Button = ({ children, variant = "primary", ...props }) => {
   const spinnerColor = variant === "secondary" ? "#00e8af" : "currentColor";
   const Icon = props.icon;
   return (
-    <StyledButton variant={variant} {...props}>
+    <StyledButton
+      variant={variant}
+      {...props}
+      style={props.disabled ? { backgroundColor: "gray" } : null}
+    >
       {props.loading ? (
         <>
           <span style={{ marginRight: 20 }}>Mining {"  "}</span>
